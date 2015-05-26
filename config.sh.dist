@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Infos connexion db
+DBUSER=dbuser
+DBPWD=dbpwd
+DB=dbname
+admin=mail@mail
+
+# Les rapports
+BASE=/PATHBASE
+RAPPORT=$BASE/backupreport
+RAPPORTCOLL=$BASE/backupreportcoll
+NEVERLOGGED=$BASE/neverlogged
+NOHOMEDIR=$BASE/nohomedir
+TOOLD=$BASE/toold
+
+# Initialisation des fichiers temporaires
+echo "Ne se sont encore jamais connectes:
+" > $NEVERLOGGED
+echo "N'ont pas encore de repertoire:
+" > $NOHOMEDIR
+echo "Rapport de sauvegarde:
+" > $RAPPORT
+echo "Se sont connecte depuis plus d'une semaine:
+" > $TOOLD
+
+
+# divers
+TODAY=`date +%s`
+col1="...................."
+col2="......."
