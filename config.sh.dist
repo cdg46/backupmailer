@@ -29,3 +29,6 @@ echo "Se sont connecte depuis plus d'une semaine:
 TODAY=`date +%s`
 col1="...................."
 col2="......."
+ERRORNEVERLOGGED=0
+ERRORNOHOMEDIR=0
+ERRORTOOLD=0
