@@ -10,12 +10,19 @@ sendreport () {
   # param $2 : subject
   # param $3 : priority
   # param $3 : body
+  # param $4 : sender
 
   TMP=`mktemp`
   rm -rf $TMP
 
-  fappend $TMP "FROM: cronsauvegarde@mail.com"
+  fappend $TMP "FROM: $5"
   fappend $TMP "TO: $1"
+  fappend $TMP "Return-Path: $5"
+  fappend $TMP "Reply-To: $5"
+  fappend $TMP "X-Mailer: bash CDG46"
+  fappend $TMP "Content-type: text/plain; charset=utf-8"
+  fappend $TMP "MIME-Version: 1.0"
+
   case "$3" in
     1)
       fappend $TMP "X-Priority: 1 (high)"
@@ -44,7 +51,7 @@ sendreport () {
       ;;
   esac
 
-  fappend $TMP "$2"
+  fappend $TMP "Subject: $2"
   fappend $TMP ""
   cat "$4" >>  $TMP
   fappend $TMP ""
@@ -79,3 +86,4 @@ DBUSER=dbuser
 DBPWD=dbpwd
 DB=dbname
 admin=mail@mail
+sender=sender@mail.com
