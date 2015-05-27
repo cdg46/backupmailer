@@ -1,28 +1,69 @@
 #!/bin/bash
 
-# Infos connexion db
-DBUSER=dbuser
-DBPWD=dbpwd
-DB=dbname
-admin=mail@mail
+# fonctions utiles
+fappend () {
+  echo "$2" >> $1
+}
+
+sendreport () {
+  # param $1 : rcpt
+  # param $2 : subject
+  # param $3 : priority
+  # param $3 : body
+
+  TMP=`mktemp`
+  rm -rf $TMP
+
+  fappend $TMP "FROM: cronsauvegarde@mail.com"
+  fappend $TMP "TO: $1"
+  case "$3" in
+    1)
+      fappend $TMP "X-Priority: 1 (high)"
+      fappend $TMP "X-MSMail-Priority: high"
+      fappend $TMP "Importance: high"
+      ;;
+    2)
+      fappend $TMP "X-Priority: 2 (high)"
+      fappend $TMP "X-MSMail-Priority: high"
+      fappend $TMP "Importance: high"
+      ;;
+    3)
+      fappend $TMP "X-Priority: 3 (normal)"
+      fappend $TMP "X-MSMail-Priority: normal"
+      fappend $TMP "Importance: normal"
+      ;;
+    4)
+      fappend $TMP "X-Priority: 4 (low)"
+      fappend $TMP "X-MSMail-Priority: low"
+      fappend $TMP "Importance: low"
+      ;;
+    5)
+      fappend $TMP "X-Priority: 5 (lowest)"
+      fappend $TMP "X-MSMail-Priority: low"
+      fappend $TMP "Importance: low"
+      ;;
+  esac
+
+  fappend $TMP "$2"
+  fappend $TMP ""
+  cat "$4" >>  $TMP
+  fappend $TMP ""
+  fappend $TMP ""
+
+cat $TMP | sendmail -t
+}
+
 
 # Les rapports
-BASE=/PATHBASE
-RAPPORT=$BASE/backupreport
-RAPPORTCOLL=$BASE/backupreportcoll
-NEVERLOGGED=$BASE/neverlogged
-NOHOMEDIR=$BASE/nohomedir
-TOOLD=$BASE/toold
+RAPPORT=`mktemp`
+NEVERLOGGED=`mktemp`
+NOHOMEDIR=`mktemp`
+TOOLD=`mktemp`
 
-# Initialisation des fichiers temporaires
-echo "Ne se sont encore jamais connectes:
-" > $NEVERLOGGED
-echo "N'ont pas encore de repertoire:
-" > $NOHOMEDIR
-echo "Rapport de sauvegarde:
-" > $RAPPORT
-echo "Se sont connecte depuis plus d'une semaine:
-" > $TOOLD
+fappend $RAPPORT "Rapport de sauvegarde:"
+fappend $NEVERLOGGED "Ne se sont encore jamais connectes:"
+fappend $NOHOMEDIR "N'ont pas encore de repertoire:"
+fappend $TOOLD "Se sont connecte depuis plus d'une semaine:"
 
 
 # divers
@@ -32,3 +73,9 @@ col2="......."
 ERRORNEVERLOGGED=0
 ERRORNOHOMEDIR=0
 ERRORTOOLD=0
+
+# Infos connexion db
+DBUSER=dbuser
+DBPWD=dbpwd
+DB=dbname
+admin=mail@mail

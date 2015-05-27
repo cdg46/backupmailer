@@ -1,21 +1,22 @@
 #!/bin/bash
 
+# inclusion fichier de configuration
+source $(dirname $0)/config.sh.dist
+
 if [ -f $(dirname $0)/config.sh ]
 then
   source $(dirname $0)/config.sh
-else
-  source $(dirname $0)/config.sh.dist
 fi
 
+
+# c'est parti !!
 while read userid homedir email last_login
 do
   ERRORCOLL=0
-  RAPPORTCOLL=$BASE/backupreport_$userid
-  echo "Bonjour,
+  RAPPORTCOLL=`mktemp`
+  fappend $RAPPORTCOLL "Bonjour,
 
-Veuillez trouver un rapport de votre sauvegarde a distance sur les serveurs du CDG46.
-
-" > $RAPPORTCOLL
+Veuillez trouver un rapport de votre sauvegarde a distance sur les serveurs du CDG46."
 
   if [ -d $homedir ]
   then
@@ -24,8 +25,8 @@ Veuillez trouver un rapport de votre sauvegarde a distance sur les serveurs du C
     if [ "$last_login" == "0000-00-00 00:00:00" ]
     then
       ERRORNEVERLOGGED=1
-      echo "  * ${userid}" >> $NEVERLOGGED
-      printf "%s %s %s %s _____-__-__ __:__\n" $userid "${col1:${#userid}}" $SIZE "${col2:${#SIZE}}" >> $RAPPORT
+      fappend $NEVERLOGGED "  * ${userid}"
+      fappend $RAPPORT "$(printf "%s %s %s %s _____-__-__ __:__\n" $userid "${col1:${#userid}}" $SIZE "${col2:${#SIZE}}")"
     else
       last_login=`date --date="$last_login" +%Y-%m-%d\ %H:%m`
 
@@ -39,72 +40,60 @@ Veuillez trouver un rapport de votre sauvegarde a distance sur les serveurs du C
       then
         ERRORCOLL=1
         ERRORTOOLD=1
-        echo "/!\ cela fait plus d'une semaine qu'aucun fichier n'a ete depose sur le serveur
-" >> $RAPPORTCOLL
-        printf "%s %s $last_login\n" $userid "${col1:${#userid}}"  >> $TOOLD
+        fappend $RAPPORTCOLL "/!\ cela fait plus d'une semaine qu'aucun fichier n'a ete depose sur le serveur"
+        fappend $TOOLD "$(printf "%s %s $last_login\n" $userid "${col1:${#userid}}")"
       fi
 
 
       ## Envoi mail a la collectivite 
-      echo "vous utilisez actuellement $SIZE sur votre espace de sauvegarde en ligne.
+      fappend $RAPPORTCOLL "Vous utilisez actuellement $SIZE sur votre espace de sauvegarde en ligne.
 
-Votre derniere sauvegarde sur ce serveur date du ${last_login}" >> $RAPPORTCOLL
+Votre derniere sauvegarde sur ce serveur date du ${last_login}"
 
-      printf "%s %s %s %s $last_login\n" $userid "${col1:${#userid}}" $SIZE "${col2:${#SIZE}}" >> $RAPPORT
-      
-#${userid} : ${homedir} __ ${email}  ${last_login}"
+      fappend $RAPPORT "$(printf "%s %s %s %s $last_login\n" $userid "${col1:${#userid}}" $SIZE "${col2:${#SIZE}}")"
     fi
   else
     if [ "$userid" != "userid" ]; then
       ERRORCOLL=1
       ERRORNOHOMEDIR=1
-      echo "  * ${userid}" >> $NOHOMEDIR
+      fappend $NOHOMEDIR "  * ${userid}"
       SIZE=N/A
-      printf "%s %s %s\n" $userid "${col1:${#userid}}" $SIZE >> $RAPPORT
+      fappend $RAPPORT "$(printf "%s %s %s\n" $userid "${col1:${#userid}}" $SIZE)"
     fi
   fi
 
   # Envoi du rapport a la collectivite
   if [ ! -z "$1" ]
   then
-    echo "
---------------------------------------------------------------------------
-Service de sauvegarde a distance du CDG46
-
-email : sauvegarde@cdgfpt46.fr
-tel : 05 32 28 00 15" >> $RAPPORTCOLL
+    fappend $RAPPORTCOLL "\n--------------------------------------------------------------------------\nService de sauvegarde a distance du CDG4\n\n
+email : sauvegarde@cdgfpt46.fr\ntel : 05 32 28 00 15"
 
     # Il y a un souci donc envoi specifique
     if [ ! -z "$ERRORCOL" ]
     then
-      echo "
-#################################################
-#                                               #
-#  VEUILLEZ CONTACTER LE SERVICE DE SAUVEGARDE  #
-#                                               #
-#          PAR TELEPHONE OU PAR MAIL            #
-#                                               #
-#################################################
-" >> $RAPPORTCOLL
+      fappend $RAPPORTCOLL "\n#################################################\n#                                               #\n#  VEUILLEZ CONTACTER LE SERVICE DE SAUVEGARDE  #\n#                                               #\n#          PAR TELEPHONE OU PAR MAIL            #\n#                                               #\n#################################################\n"
 
-      cat $RAPPORTCOLL | mail -S "X-Priority: 1" -S "Importance: high" -s "[CDG46][Sauvegarde][Rapport hebdomadaire]" $email
+      sendreport $email "[CDG46][Sauvegarde][Rapport hebdomadaire]" 1 $RAPPORTCOLL
     else
-      cat $RAPPORTCOLL | mail -s "[CDG46][Sauvegarde][Rapport hebdomadaire]" $email
+      sendreport $email "[CDG46][Sauvegarde][Rapport hebdomadaire]" 3 $RAPPORTCOLL
     fi
   fi
 done < <(echo "SELECT userid, homedir, email, last_login FROM users ORDER BY userid ASC" | mysql $DB -u $DBUSER -p$DBPWD)
 
-cat $RAPPORT | mail -s "[CDG46][Sauvegarde][Etat du jour]" $admin
+# Envoi des rapports aux admins
+sendreport "$admin" "[CDG46][Sauvegarde][Etat du jour]" 3 $RAPPORT
 
 if [ ! -z "$ERRORNOHOMEDIR" ]
 then
-  cat $NOHOMEDIR | mail -S "X-Priority: 1" -S "Importance: high" -s "[CDG46][Sauvegarde][Repertoire vide]" $admin
+  sendreport $admin "[CDG46][Sauvegarde][Repertoire vide]" 1 $NOHOMEDIR
 fi
+
 if [ ! -z "$ERRORTOOLD" ]
 then
-  cat $TOOLD | mail -S "X-Priority: 1" -S "Importance: high" -s "[CDG46][Sauvegarde][Plus d'une semaine]" $admin
+  sendreport $admin "[CDG46][Sauvegarde][Plus d'une semaine]" 1 $TOOLD
 fi
+
 if [ ! -z "$ERRORNEVERLOGGED" ]
 then
-  cat $NEVERLOGGED | mail -S "X-Priority: 1" -S "Importance: high" -s "[CDG46][Sauvegarde][Jamais connecte]" $admin
+  sendreport $admin "[CDG46][Sauvegarde][Jamais connecte]" 1 $NEVERLOGGED
 fi
