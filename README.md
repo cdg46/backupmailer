@@ -20,3 +20,16 @@ crontab -e
 0 22 * * * /bin/bash /path/backupmailer/mail.sh # pour les admin
 0 22 * * 1 /bin/bash /path/backupmailer/mail.sh users # pour les utilisateurs
 ```
+
+### Customisation
+
+Vous devez faire "matcher" ```/etc/hosts``` et sender de ```config.sh```
+```
+vi /etc/hosts
+127.0.0.1 domain
+```
+
+```
+vi config.sh
+sender=email@domain
+```
