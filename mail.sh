@@ -40,7 +40,7 @@ Veuillez trouver un rapport de votre sauvegarde a distance sur les serveurs du C
       then
         ERRORCOLL=1
         ERRORTOOLD=1
-        fappend $RAPPORTCOLL "/!\ cela fait plus d'une semaine qu'aucun fichier n'a ete depose sur le serveur"
+        fappend $RAPPORTCOLL "/!\ cela fait plus d'une semaine que vous ne vous etes pas connecte sur le serveur de sauvegarde a distance"
         fappend $TOOLD "$(printf "%s %s $last_login\n" $userid "${col1:${#userid}}")"
       fi
 
@@ -65,8 +65,8 @@ Votre derniere sauvegarde sur ce serveur date du ${last_login}"
   # Envoi du rapport a la collectivite
   if [ ! -z "$1" ]
   then
-    fappend $RAPPORTCOLL "\n--------------------------------------------------------------------------\nService de sauvegarde a distance du CDG4\n\n
-email : sauvegarde@cdgfpt46.fr\ntel : 05 32 28 00 15"
+    fappend $RAPPORTCOLL "\n--------------------------------------------------------------------------\nService de sauvegarde a distance du CDG46\n\n
+email : sauvegarde@cdg46.fr\ntel : 05 32 28 00 15"
 
     # Il y a un souci donc envoi specifique
     if [ ! -z "$ERRORCOL" ]
