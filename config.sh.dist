@@ -9,8 +9,9 @@ sendreport () {
   # param $1 : rcpt
   # param $2 : subject
   # param $3 : priority
-  # param $3 : body
-  # param $4 : sender
+  # param $4 : body
+  # param $5 : sender
+  # param $6 : smtp server
 
   TMP=`mktemp`
   rm -rf $TMP
@@ -57,7 +58,10 @@ sendreport () {
   fappend $TMP ""
   fappend $TMP ""
 
-cat $TMP | sendmail -t
+#  cat $TMP | sendmail -ta
+  rm $TMP
+
+  cat $4 | mailx -s smtp=$6 -r "$1" -s "$2" $5
 }
 
 
@@ -85,5 +89,7 @@ ERRORTOOLD=0
 DBUSER=dbuser
 DBPWD=dbpwd
 DB=dbname
+# Infos mails
+SMTP=smtp.server.net
 admin=mail@mail
 sender=sender@mail.com

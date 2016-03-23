@@ -73,27 +73,34 @@ email : sauvegarde@cdgfpt46.fr\ntel : 05 32 28 00 15"
     then
       fappend $RAPPORTCOLL "\n#################################################\n#                                               #\n#  VEUILLEZ CONTACTER LE SERVICE DE SAUVEGARDE  #\n#                                               #\n#          PAR TELEPHONE OU PAR MAIL            #\n#                                               #\n#################################################\n"
 
-      sendreport $email "[CDG46][Sauvegarde][Rapport hebdomadaire]" 1 $RAPPORTCOLL $sender
+      sendreport $email "[CDG46][Sauvegarde][Rapport hebdomadaire]" 1 $RAPPORTCOLL $sender $SMTP
     else
-      sendreport $email "[CDG46][Sauvegarde][Rapport hebdomadaire]" 3 $RAPPORTCOLL $sender
+      sendreport $email "[CDG46][Sauvegarde][Rapport hebdomadaire]" 3 $RAPPORTCOLL $sender $SMTP
     fi
   fi
+
+  # nettoyage des fichiers generes
+  rm $RAPPORTCOLL
+
 done < <(echo "SELECT userid, homedir, email, last_login FROM users ORDER BY userid ASC" | mysql $DB -u $DBUSER -p$DBPWD)
 
 # Envoi des rapports aux admins
-sendreport "$admin" "[CDG46][Sauvegarde][Etat du jour]" 3 $RAPPORT $sender
+sendreport "$admin" "[CDG46][Sauvegarde][Etat du jour]" 3 $RAPPORT $sender $SMTP
 
 if [ ! -z "$ERRORNOHOMEDIR" ]
 then
-  sendreport $admin "[CDG46][Sauvegarde][Repertoire vide]" 1 $NOHOMEDIR $sender
+  sendreport $admin "[CDG46][Sauvegarde][Repertoire vide]" 1 $NOHOMEDIR $sender $SMTP
 fi
 
 if [ ! -z "$ERRORTOOLD" ]
 then
-  sendreport $admin "[CDG46][Sauvegarde][Plus d'une semaine]" 1 $TOOLD $sender
+  sendreport $admin "[CDG46][Sauvegarde][Plus d'une semaine]" 1 $TOOLD $sender $SMTP
 fi
 
 if [ ! -z "$ERRORNEVERLOGGED" ]
 then
-  sendreport $admin "[CDG46][Sauvegarde][Jamais connecte]" 1 $NEVERLOGGED $sender
+  sendreport $admin "[CDG46][Sauvegarde][Jamais connecte]" 1 $NEVERLOGGED $sender $SMTP
 fi
+
+# nettoyage des fichiers pour admin
+rm $RAPPORT $NOHOMEDIR $TOOLD $NEVERLOGGED
